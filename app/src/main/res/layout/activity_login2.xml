@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:paddingHorizontal="50dp"
+    android:gravity="center"
+    >
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Login"
+        android:layout_gravity="center"
+        android:textSize="30dp"
+        android:layout_marginBottom="5dp"
+
+        />
+
+    <TextView
+        android:id="@+id/popUpLoginNumber"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:background="@drawable/rounded_background"
+        android:backgroundTint="@color/Red"
+        android:visibility="gone"
+        android:textColor="@color/white"
+        android:paddingHorizontal="10dp"
+        />
+    <EditText
+        android:id="@+id/loginPhoneNumber"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter Phone Number"
+        android:layout_marginBottom="5dp"
+        android:inputType="number"
+        />
+    <TextView
+        android:id="@+id/popUpLoginPassword"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:background="@drawable/rounded_background"
+        android:backgroundTint="@color/Red"
+        android:visibility="gone"
+        android:textColor="@color/white"
+        android:paddingHorizontal="10dp"
+        />
+    <EditText
+        android:id="@+id/loginPassword"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter Password"
+        android:layout_marginBottom="5dp"
+
+        />
+
+    <Button
+        android:id="@+id/loginVerify"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Login"
+        android:layout_marginBottom="5dp"
+        android:enabled="false"
+        />
+    <Button
+        android:id="@+id/signUp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sign up"
+        android:layout_marginBottom="15dp"
+        />
+    <ProgressBar
+        android:id="@+id/Login_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:visibility="gone"
+        />
+
+</LinearLayout>

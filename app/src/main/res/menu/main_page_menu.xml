@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:id="@+id/menu_icon"
+        android:title="@string/app_name"
+        android:icon="@drawable/ic_baseline_menu_24"
+        app:showAsAction="always|collapseActionView"
+        >
+        <menu>
+            <item
+                android:id="@+id/clearChat"
+                android:title="@string/clear"
+                >
+            </item>
+            <item
+                android:id="@+id/contacts1"
+                android:title="@string/contacts"
+                >
+            </item>
+            <item
+                android:id="@+id/contacts2"
+                android:title="@string/contacts"
+                >
+            </item>
+            <item
+                android:id="@+id/logoutUser"
+                android:title="@string/logout"
+                >
+            </item>
+        </menu>
+
+    </item>
+    <item
+        android:id="@+id/search_button"
+        android:title="@string/search"
+        android:icon="@drawable/ic_baseline_search_24"
+        app:showAsAction="ifRoom"
+        app:actionViewClass="androidx.appcompat.widget.SearchView" />
+</menu>

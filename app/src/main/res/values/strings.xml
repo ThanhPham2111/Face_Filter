@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Ứng dụng Chat</string>
+    <string name="enter_text">Nhập tin nhắn...</string>
+    <string name="send">Gửi</string>
+    <string name="search">Tìm kiếm</string>
+    <string name="clear">Xóa</string>
+    <string name="contacts">Danh bạ</string>
+    <string name="logout">Đăng xuất</string>
+    <string name="login">Đăng nhập</string>
+    <string name="signup">Đăng ký</string>
+    <string name="enter_name">Nhập tên</string>
+    <string name="enter_phone">Nhập số điện thoại</string>
+    <string name="enter_password">Nhập mật khẩu</string>
+    <string name="conversations">Cuộc trò chuyện</string>
+    <string name="messages">Tin nhắn</string>
+</resources>
