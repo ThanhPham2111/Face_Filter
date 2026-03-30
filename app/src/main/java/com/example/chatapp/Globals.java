@@ -34,23 +34,27 @@ public class Globals {
     // functions
     //global function that takes phone number as input and check it is correct or not
     public static boolean verifyPhoneNumber(String phoneNumber){
-        if(phoneNumber.startsWith("+")){
-            phoneNumber = phoneNumber.replaceAll("\\s", "");
-            return phoneNumber.length() == 13;
-        }else{
-            return phoneNumber.length() == 11 &&
-                    phoneNumber.startsWith(String.valueOf(0));
-        }
+        return !formatPhoneNumber(phoneNumber).equals("-1");
     }
 
     public static String formatPhoneNumber(String phoneNumber){
-        if(phoneNumber.startsWith("+92") || phoneNumber.startsWith("0")){
-            phoneNumber = phoneNumber.replaceAll("\\s", "");
-            phoneNumber = "0" + phoneNumber.substring(phoneNumber.length() - 10);
-            if(phoneNumber.length() == 11){
-                return phoneNumber;
-            }
+        if(phoneNumber == null){
+            return "-1";
         }
+        phoneNumber = phoneNumber.replaceAll("\\s", "");
+        // Keep only digits so users can input spaces or separators.
+        phoneNumber = phoneNumber.replaceAll("[^0-9]", "");
+
+        // Accept local forms: 0xxxxxxxxx (10 digits) or legacy 0xxxxxxxxxx (11 digits).
+        if(phoneNumber.startsWith("0") && (phoneNumber.length() == 10 || phoneNumber.length() == 11)){
+            return phoneNumber;
+        }
+
+        // Accept +84/84 form and normalize to local 0xxxxxxxxx.
+        if(phoneNumber.startsWith("84") && phoneNumber.length() == 11){
+            return "0" + phoneNumber.substring(2);
+        }
+
         return "-1";
     }
 }

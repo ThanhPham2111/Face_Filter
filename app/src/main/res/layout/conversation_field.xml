@@ -4,11 +4,10 @@
     android:id="@+id/conversationFieldID"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="7dp"
-    android:layout_marginHorizontal="3dp"
-    android:layout_marginVertical="3dp"
+    android:padding="10dp"
+    android:layout_marginHorizontal="4dp"
+    android:layout_marginVertical="4dp"
     android:background="@drawable/conversational_field_style"
-    android:backgroundTint="@color/Black1"
     >
 
     <LinearLayout
@@ -47,11 +46,11 @@
                 android:layout_marginVertical="2dp"
                 android:paddingHorizontal="3dp"
                 android:layout_marginHorizontal="8dp"
-                android:textSize="25sp"
+                android:textSize="22sp"
                 android:textStyle="bold"
                 android:text="name"
                 android:layout_weight="1"
-                android:textColor="@color/white"
+                android:textColor="@color/pastel_text_primary"
                 />
 
             <TextView
@@ -61,7 +60,7 @@
                 android:textSize="12sp"
                 android:layout_marginRight="20dp"
                 android:text="time"
-                android:textColor="@color/white"
+                android:textColor="@color/pastel_text_hint"
                 />
         </LinearLayout>
         <TextView
@@ -73,7 +72,7 @@
             android:layout_marginBottom="3dp"
             android:layout_marginHorizontal="8dp"
             android:text="message"
-            android:textColor="@color/white"
+            android:textColor="@color/pastel_text_hint"
             android:singleLine="true"
             android:ellipsize="end"
             />
