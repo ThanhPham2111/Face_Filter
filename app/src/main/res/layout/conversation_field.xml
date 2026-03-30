@@ -23,10 +23,12 @@
             android:layout_height="wrap_content"
             card_view:cardCornerRadius="30dp">
         <ImageView
+            android:id="@+id/conversationAvatar"
             android:layout_width="45dp"
             android:layout_height="45dp"
             android:layout_gravity="center"
-            android:src="@drawable/cat"
+            android:src="@drawable/ic_avatar_cat_pastel"
+            android:contentDescription="Conversation avatar"
             />
         </androidx.cardview.widget.CardView>
 
@@ -50,6 +52,7 @@
                 android:textStyle="bold"
                 android:text="name"
                 android:layout_weight="1"
+                android:fontFamily="sans-serif-medium"
                 android:textColor="@color/pastel_text_primary"
                 />
 

@@ -7,6 +7,33 @@
     android:background="@drawable/bg_auth_screen"
     >
 
+    <LinearLayout
+        android:id="@+id/conversationTitleBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingTop="16dp"
+        android:paddingBottom="8dp">
+
+        <ImageView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginEnd="8dp"
+            android:contentDescription="Chats icon"
+            android:src="@drawable/ic_chat_bubble_pastel" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Chats"
+            android:textColor="@color/pastel_text_primary"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="22sp" />
+    </LinearLayout>
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/floating_add_button"
         android:layout_width="wrap_content"
@@ -29,6 +56,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:padding="8dp"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:paddingBottom="8dp"
+        android:paddingTop="72dp"
         />
 </RelativeLayout>

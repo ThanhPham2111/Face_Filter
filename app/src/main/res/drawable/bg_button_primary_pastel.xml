@@ -6,6 +6,12 @@
             <solid android:color="@color/pastel_blue_200" />
         </shape>
     </item>
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <corners android:radius="14dp" />
+            <solid android:color="@color/pastel_blue_700" />
+        </shape>
+    </item>
     <item>
         <shape android:shape="rectangle">
             <corners android:radius="14dp" />
