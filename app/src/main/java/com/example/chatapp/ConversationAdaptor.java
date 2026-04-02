@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.LinearLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -25,6 +26,11 @@ public class ConversationAdaptor extends RecyclerView.Adapter<ConversationAdapto
     public ArrayList<Person>  personsList;
     public ArrayList<Person> filteredPersonLists;
     private SelectItemListener listener;
+    private static final int[] AVATARS = new int[]{
+            R.drawable.ic_avatar_cat_pastel,
+            R.drawable.ic_avatar_bunny_pastel,
+            R.drawable.ic_avatar_bear_pastel
+    };
 
     public ConversationAdaptor(Context context, ArrayList<Person> personsList, SelectItemListener listener){
         this.context = context;
@@ -53,6 +59,8 @@ public class ConversationAdaptor extends RecyclerView.Adapter<ConversationAdapto
         String formattedTime = formatted.format(dateTime);
 
         holder.textViewName.setText(name);
+        int idx = Math.abs(name.hashCode()) % AVATARS.length;
+        holder.conversationAvatar.setImageResource(AVATARS[idx]);
         if(Objects.equals(lastMessage, "")){
             holder.textViewMessage.setText("");
             holder.textViewTime.setText("");
@@ -84,12 +92,14 @@ public class ConversationAdaptor extends RecyclerView.Adapter<ConversationAdapto
         TextView textViewMessage;
         TextView textViewTime;
         LinearLayout conversationField;
+        ImageView conversationAvatar;
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
             textViewName = itemView.findViewById(R.id.conversationPersonNameField);
             textViewMessage = itemView.findViewById(R.id.conversationMessageField);
             textViewTime = itemView.findViewById(R.id.conversationTimeField);
+            conversationAvatar = itemView.findViewById(R.id.conversationAvatar);
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {

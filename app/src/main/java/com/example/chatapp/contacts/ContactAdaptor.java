@@ -24,6 +24,11 @@ public class ContactAdaptor extends RecyclerView.Adapter<ContactAdaptor.ContactV
 
     private ArrayList<Contact> contacts;
     private SelectItemListenerContact listenerContact;
+    private static final int[] AVATARS = new int[]{
+            R.drawable.ic_avatar_cat_pastel,
+            R.drawable.ic_avatar_bunny_pastel,
+            R.drawable.ic_avatar_bear_pastel
+    };
 
     public ContactAdaptor(ArrayList<Contact> contacts, SelectItemListenerContact listenerContact){
         this.contacts = contacts;
@@ -42,6 +47,8 @@ public class ContactAdaptor extends RecyclerView.Adapter<ContactAdaptor.ContactV
     public void onBindViewHolder(@NonNull ContactViewHolder holder, int position) {
         String name = contacts.get(position).getName();
         holder.contactTextView.setText(name);
+        int idx = Math.abs(name.hashCode()) % AVATARS.length;
+        holder.contactAvatar.setImageResource(AVATARS[idx]);
     }
 
     @Override
@@ -52,11 +59,13 @@ public class ContactAdaptor extends RecyclerView.Adapter<ContactAdaptor.ContactV
     public class ContactViewHolder extends RecyclerView.ViewHolder{
 
         TextView contactTextView;
+        ImageView contactAvatar;
 
         public ContactViewHolder(@NonNull View itemView) {
             super(itemView);
             //sender
             contactTextView = (TextView) itemView.findViewById(R.id.contactnamefield);
+            contactAvatar = (ImageView) itemView.findViewById(R.id.contactAvatar);
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {

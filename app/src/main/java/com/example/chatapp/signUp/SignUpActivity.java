@@ -103,7 +103,7 @@ public class SignUpActivity extends AppCompatActivity {
                         signUpVerify.setEnabled(true);
                     }
                 }else{
-                    popUpPhoneNumber.setText("Starts with 0, Should contain 11 letters");
+                    popUpPhoneNumber.setText("Phone must start with 0 and contain 10-11 digits");
                     colorStateList = ColorStateList.valueOf(RED);
                     signUpVerify.setEnabled(false);
                     isPhoneNumberSatisfyFormat = false;
@@ -159,11 +159,11 @@ public class SignUpActivity extends AppCompatActivity {
             public void onClick(View view) {
                 progressBar.setVisibility(View.VISIBLE);
                 String name = signUpName.getText().toString().trim();
-                String phoneNumber = signUpPhoneNumber.getText().toString().trim();
+                String phoneNumber = Globals.formatPhoneNumber(signUpPhoneNumber.getText().toString().trim());
                 String password = signUpPassword.getText().toString().trim();
 
 
-                if( name.equals("") || phoneNumber.equals("") || password.equals("")){
+                if( name.equals("") || phoneNumber.equals("-1") || password.equals("")){
                     Toast.makeText(SignUpActivity.this, "Field is Empty", Toast.LENGTH_SHORT).show();
                     progressBar.setVisibility(View.GONE);
                 }else{

@@ -100,7 +100,7 @@ public class LoginActivity extends AppCompatActivity {
                         loginVerify.setEnabled(true);
                     }
                 }else{
-                    popUpLoginNumber.setText("Starts with 0, Should contain 11 letters");
+                    popUpLoginNumber.setText("Phone must start with 0 and contain 10-11 digits");
                     colorStateList = ColorStateList.valueOf(RED);
                     loginVerify.setEnabled(false);
                     isPhoneNumberSatisfyFormat = false;
@@ -155,9 +155,9 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 progressBar.setVisibility(View.VISIBLE);
-                String phoneNumber = loginPhoneNumber.getText().toString().trim();
+                String phoneNumber = Globals.formatPhoneNumber(loginPhoneNumber.getText().toString().trim());
                 String password = loginPassword.getText().toString().trim();
-                if(phoneNumber.equals("") || password.equals("")){
+                if(phoneNumber.equals("-1") || password.equals("")){
                     Toast.makeText(LoginActivity.this, "Field is Empty", Toast.LENGTH_SHORT).show();
                     progressBar.setVisibility(View.GONE);
                 }else{

@@ -3,21 +3,30 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/rounded"
+    android:background="@drawable/bg_auth_screen"
     android:paddingVertical="5dp"
     android:paddingHorizontal="20dp"
     android:orientation="vertical"
     >
 
+    <ImageView
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="4dp"
+        android:src="@drawable/ic_user_pastel"
+        android:contentDescription="Contacts icon" />
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Contacts"
+        android:fontFamily="sans-serif-medium"
         android:textSize="30sp"
         android:textStyle="bold"
         android:textAlignment="center"
         android:layout_marginBottom="7dp"
-        android:textColor="@color/white"
+        android:textColor="@color/pastel_text_primary"
         />
 
     <androidx.recyclerview.widget.RecyclerView

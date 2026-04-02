@@ -19,6 +19,11 @@ import java.util.Date;
 
 public class MessageAdaptor extends RecyclerView.Adapter<MessageAdaptor.MessageViewHolder>{
 private ArrayList<Message> messages;
+private static final int[] AVATARS = new int[]{
+        R.drawable.ic_avatar_cat_pastel,
+        R.drawable.ic_avatar_bunny_pastel,
+        R.drawable.ic_avatar_bear_pastel
+};
 
 public MessageAdaptor(ArrayList<Message> messages){
     this.messages = messages;
@@ -62,12 +67,16 @@ public MessageAdaptor(ArrayList<Message> messages){
 
         //update sender text
         if (messages.get(position).getType() == 0){
+            int idx = Math.abs(title.hashCode()) % AVATARS.length;
+            holder.senderIcon.setImageResource(AVATARS[idx]);
             holder.senderTextTitle.setText(title);
             holder.senderTextMessage.setText(message);
             holder.senderTextTime.setText(formattedTime);
         }
         //update receiver text
         else{
+            int idx = Math.abs(title.hashCode()) % AVATARS.length;
+            holder.receiverIcon.setImageResource(AVATARS[idx]);
             holder.receiverTextTitle.setText(title);
             holder.receiverTextMessage.setText(message);
             holder.receiverTextTime.setText(formattedTime);
