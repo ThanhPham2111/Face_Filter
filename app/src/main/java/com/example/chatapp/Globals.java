@@ -21,6 +21,9 @@ public class Globals {
     public static final String M_COLUMN_TIME = "time";
     public static final String M_COLUMN_IS_SENDER = "is_sender";
     public static final String M_COLUMN_C_ID = "c_id";     //conversation id
+    public static final String M_COLUMN_CONTENT_TYPE = "content_type";
+    public static final String M_COLUMN_MEDIA_PAYLOAD = "media_payload";
+    public static final String M_COLUMN_MEDIA_DURATION = "media_duration";
 
     //database
     public static IChatInterface dao;

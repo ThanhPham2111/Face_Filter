@@ -1,0 +1,33 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email != null;
+    }
+
+    function isParticipant(userA, userB) {
+      return isSignedIn() && (
+        request.auth.token.email.matches('^' + userA + '@.*$') ||
+        request.auth.token.email.matches('^' + userB + '@.*$')
+      );
+    }
+
+    function isValidMediaType(mediaType) {
+      return mediaType == "images" || mediaType == "voices";
+    }
+
+    match /chat_media/{userA}/{userB}/{mediaType}/{fileName} {
+      allow read: if isParticipant(userA, userB) && isValidMediaType(mediaType);
+      allow write: if isParticipant(userA, userB)
+        && isValidMediaType(mediaType)
+        && (
+          (mediaType == "images" && request.resource.contentType.matches('image/.*') && request.resource.size < 2 * 1024 * 1024) ||
+          (mediaType == "voices" && request.resource.contentType.matches('audio/.*') && request.resource.size < 3 * 1024 * 1024)
+        );
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

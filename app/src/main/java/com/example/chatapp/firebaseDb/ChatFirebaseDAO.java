@@ -21,14 +21,11 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -134,13 +131,35 @@ public class ChatFirebaseDAO implements IChatInterface {
                         String messageId = childSnapshot.getKey();
                         String messsageUsername = childSnapshot.child(M_COLUMN_USERNAME).getValue(String.class);
                         String messageDetail = childSnapshot.child(M_COLUMN_DETAIL).getValue(String.class);
-                        long messageTime = childSnapshot.child(M_COLUMN_TIME).getValue(Long.class);
-                        int messageIsSender = childSnapshot.child(M_COLUMN_IS_SENDER).getValue(int.class);
+                        Long messageTimeRaw = childSnapshot.child(M_COLUMN_TIME).getValue(Long.class);
+                        Long messageIsSenderRaw = childSnapshot.child(M_COLUMN_IS_SENDER).getValue(Long.class);
                         String messagePersonId = childSnapshot.child(M_COLUMN_C_ID).getValue(String.class);
+                        String contentType = childSnapshot.child(M_COLUMN_CONTENT_TYPE).getValue(String.class);
+                        String mediaPayload = childSnapshot.child(M_COLUMN_MEDIA_PAYLOAD).getValue(String.class);
+                        Long mediaDurationRaw = childSnapshot.child(M_COLUMN_MEDIA_DURATION).getValue(Long.class);
+
+                        long messageTime = messageTimeRaw == null ? System.currentTimeMillis() : messageTimeRaw;
+                        int messageIsSender = messageIsSenderRaw == null ? 0 : messageIsSenderRaw.intValue();
+                        int mediaDuration = mediaDurationRaw == null ? 0 : mediaDurationRaw.intValue();
+                        if (messageDetail == null) {
+                            messageDetail = "";
+                        }
+                        if (messagePersonId == null) {
+                            messagePersonId = "";
+                        }
 
                         //store in array list
 //                        int id = Integer.parseInt(conversationId.substring(2, conversationId.length()));
-                        Message message = new Message(messsageUsername,messageDetail, messageTime, messageIsSender, messagePersonId);
+                        Message message = new Message(
+                                messsageUsername,
+                                messageDetail,
+                                messageTime,
+                                messageIsSender,
+                                messagePersonId,
+                                contentType,
+                                mediaPayload,
+                                mediaDuration
+                        );
 
                         // Finally, you can add this conversation object to an ArrayList.
                         messageArrayList.add(message);
@@ -226,6 +245,9 @@ public class ChatFirebaseDAO implements IChatInterface {
         childObject.put(M_COLUMN_TIME, message.getTime());
         childObject.put(M_COLUMN_IS_SENDER, 0);
         childObject.put(M_COLUMN_C_ID, conversationID);
+        childObject.put(M_COLUMN_CONTENT_TYPE, message.getContentType());
+        childObject.put(M_COLUMN_MEDIA_PAYLOAD, message.getMediaPayload());
+        childObject.put(M_COLUMN_MEDIA_DURATION, message.getMediaDurationMs());
         myRef.child(messageId).setValue(childObject);
 
         //add messsage at receiver side
@@ -237,6 +259,9 @@ public class ChatFirebaseDAO implements IChatInterface {
         childObject2.put(M_COLUMN_TIME, message.getTime());
         childObject2.put(M_COLUMN_IS_SENDER, 1);
         childObject2.put(M_COLUMN_C_ID, userPhoneNumber);
+        childObject2.put(M_COLUMN_CONTENT_TYPE, message.getContentType());
+        childObject2.put(M_COLUMN_MEDIA_PAYLOAD, message.getMediaPayload());
+        childObject2.put(M_COLUMN_MEDIA_DURATION, message.getMediaDurationMs());
 
         myRef.child(messageId2).setValue(childObject2);
 
@@ -244,7 +269,7 @@ public class ChatFirebaseDAO implements IChatInterface {
         myRef = database.getReference().child(CHAT_DB).child(userPhoneNumber).child(CONVERSATION_TABLE);
         //making hashmap
         Map<String, Object> childObject3 = new HashMap<>();
-        childObject3.put(C_COLUMN_LAST_MESSAGE, message.getMessage());
+        childObject3.put(C_COLUMN_LAST_MESSAGE, message.getPreviewText());
         childObject3.put(C_COLUMN_TIMESTAMP, System.currentTimeMillis());
         childObject3.put(C_COLUMN_MESSAGE_TYPE, MessageType.SENT.toString());
 
@@ -256,7 +281,7 @@ public class ChatFirebaseDAO implements IChatInterface {
         //making hashmap
         Map<String, Object> childObject4 = new HashMap<>();
         childObject4.put(C_COLUMN_NAME, userName);
-        childObject4.put(C_COLUMN_LAST_MESSAGE, message.getMessage());
+        childObject4.put(C_COLUMN_LAST_MESSAGE, message.getPreviewText());
         childObject4.put(C_COLUMN_TIMESTAMP, System.currentTimeMillis());
         childObject4.put(C_COLUMN_MESSAGE_TYPE, MessageType.RECEIVED.toString());
 

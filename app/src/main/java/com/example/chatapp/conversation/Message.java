@@ -1,20 +1,22 @@
 package com.example.chatapp.conversation;
 
-import android.util.Log;
-
 import com.example.chatapp.IChatInterface;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Hashtable;
 
 public class Message {
+    public static final String CONTENT_TEXT = "text";
+    public static final String CONTENT_IMAGE = "image";
+    public static final String CONTENT_VOICE = "voice";
+
     private  String message;
     private long time;
     private int type;               //0 for sender 1 for receiver
     private String username;
     private String conversation_ID;
+    private String contentType;
+    private String mediaPayload;
+    private int mediaDurationMs;
     private transient IChatInterface dao = null;
 
     public Message(String username, String message, long time, int type) {
@@ -23,6 +25,9 @@ public class Message {
         this.type = type;
         this.username = username;
         this.conversation_ID = "";
+        this.contentType = CONTENT_TEXT;
+        this.mediaPayload = "";
+        this.mediaDurationMs = 0;
     }
 
     public Message(String username, String message, long time, int type, IChatInterface dao) {
@@ -31,6 +36,9 @@ public class Message {
         this.type = type;
         this.username = username;
         this.conversation_ID = "";
+        this.contentType = CONTENT_TEXT;
+        this.mediaPayload = "";
+        this.mediaDurationMs = 0;
         this.dao = dao;
     }
 
@@ -40,6 +48,9 @@ public class Message {
         this.type = type;
         this.username = username;
         this.conversation_ID = conversation_ID;
+        this.contentType = CONTENT_TEXT;
+        this.mediaPayload = "";
+        this.mediaDurationMs = 0;
     }
 
     public Message(String username, String message, long time, int type, String conversation_ID ,IChatInterface dao) {
@@ -48,9 +59,57 @@ public class Message {
         this.type = type;
         this.username = username;
         this.conversation_ID = conversation_ID;
+        this.contentType = CONTENT_TEXT;
+        this.mediaPayload = "";
+        this.mediaDurationMs = 0;
         this.dao = dao;
     }
 
+    public Message(String username, String message, long time, int type, String contentType, String mediaPayload, int mediaDurationMs) {
+        this.message = message;
+        this.time = time;
+        this.type = type;
+        this.username = username;
+        this.conversation_ID = "";
+        this.contentType = normalizeContentType(contentType);
+        this.mediaPayload = mediaPayload == null ? "" : mediaPayload;
+        this.mediaDurationMs = mediaDurationMs;
+    }
+
+    public Message(String username, String message, long time, int type, String contentType, String mediaPayload, int mediaDurationMs, IChatInterface dao) {
+        this.message = message;
+        this.time = time;
+        this.type = type;
+        this.username = username;
+        this.conversation_ID = "";
+        this.contentType = normalizeContentType(contentType);
+        this.mediaPayload = mediaPayload == null ? "" : mediaPayload;
+        this.mediaDurationMs = mediaDurationMs;
+        this.dao = dao;
+    }
+
+    public Message(String username, String message, long time, int type, String conversation_ID, String contentType, String mediaPayload, int mediaDurationMs) {
+        this.message = message;
+        this.time = time;
+        this.type = type;
+        this.username = username;
+        this.conversation_ID = conversation_ID;
+        this.contentType = normalizeContentType(contentType);
+        this.mediaPayload = mediaPayload == null ? "" : mediaPayload;
+        this.mediaDurationMs = mediaDurationMs;
+    }
+
+    public Message(String username, String message, long time, int type, String conversation_ID, String contentType, String mediaPayload, int mediaDurationMs, IChatInterface dao) {
+        this.message = message;
+        this.time = time;
+        this.type = type;
+        this.username = username;
+        this.conversation_ID = conversation_ID;
+        this.contentType = normalizeContentType(contentType);
+        this.mediaPayload = mediaPayload == null ? "" : mediaPayload;
+        this.mediaDurationMs = mediaDurationMs;
+        this.dao = dao;
+    }
 
     public String getMessage() {
         return message;
@@ -84,9 +143,55 @@ public class Message {
         this.username = username;
     }
 
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = normalizeContentType(contentType);
+    }
+
+    public String getMediaPayload() {
+        return mediaPayload;
+    }
+
+    public void setMediaPayload(String mediaPayload) {
+        this.mediaPayload = mediaPayload == null ? "" : mediaPayload;
+    }
+
+    public int getMediaDurationMs() {
+        return mediaDurationMs;
+    }
+
+    public void setMediaDurationMs(int mediaDurationMs) {
+        this.mediaDurationMs = mediaDurationMs;
+    }
+
+    public boolean isText() {
+        return CONTENT_TEXT.equals(contentType);
+    }
+
+    public boolean isImage() {
+        return CONTENT_IMAGE.equals(contentType);
+    }
+
+    public boolean isVoice() {
+        return CONTENT_VOICE.equals(contentType);
+    }
+
+    public String getPreviewText() {
+        if (isImage()) {
+            return "[Anh]";
+        }
+        if (isVoice()) {
+            return "[Voice]";
+        }
+        return message == null ? "" : message;
+    }
+
     public void save(String conversationId){
         if (dao != null){
-            Message m = new Message(username, message, time, type);
+            Message m = new Message(username, message, time, type, contentType, mediaPayload, mediaDurationMs);
             //save in database
             dao.saveMessage(m,conversationId);
         }
@@ -99,6 +204,9 @@ public class Message {
             time = message.getTime();
             type = message.getType();
             conversation_ID = message.getConversation_ID();
+            contentType = normalizeContentType(message.getContentType());
+            mediaPayload = message.getMediaPayload();
+            mediaDurationMs = message.getMediaDurationMs();
         }
     }
 
@@ -107,7 +215,17 @@ public class Message {
         if(dao != null){
             ArrayList<Message> objects = dao.loadMessageList(receiverId);
             for(Message obj : objects){
-                Message message1 = new Message(obj.getUsername(), obj.getMessage(), obj.getTime(), obj.getType(),obj.getConversation_ID(),dao);
+                Message message1 = new Message(
+                        obj.getUsername(),
+                        obj.getMessage(),
+                        obj.getTime(),
+                        obj.getType(),
+                        obj.getConversation_ID(),
+                        obj.getContentType(),
+                        obj.getMediaPayload(),
+                        obj.getMediaDurationMs(),
+                        dao
+                );
                 messages.add(message1);
             }
         }
@@ -116,5 +234,12 @@ public class Message {
 
     public String getConversation_ID() {
         return conversation_ID;
+    }
+
+    private static String normalizeContentType(String raw) {
+        if (CONTENT_IMAGE.equals(raw) || CONTENT_VOICE.equals(raw)) {
+            return raw;
+        }
+        return CONTENT_TEXT;
     }
 }
