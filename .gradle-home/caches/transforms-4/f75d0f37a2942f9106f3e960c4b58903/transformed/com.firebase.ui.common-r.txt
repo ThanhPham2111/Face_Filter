@@ -1,0 +1,3 @@
+com.firebase.ui.common
+id view_tree_lifecycle_owner
+id view_tree_view_model_store_owner

@@ -22,11 +22,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.chatapp.ConversationMainActivityLists;
+import com.example.chatapp.FirebaseHelper;
 import com.example.chatapp.Globals;
 import com.example.chatapp.R;
 import com.example.chatapp.signUp.SignUpActivity;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -44,7 +46,20 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // ===== FIREBASE VERIFICATION =====
+        // Verify we're connected to the CORRECT Firebase project at startup
+        try {
+            FirebaseHelper.verifyProjectConfiguration();
+        } catch (RuntimeException e) {
+            Log.e("Login", "CRITICAL: Firebase config error - " + e.getMessage());
+            Toast.makeText(this, "Firebase configuration error. Check logs.", Toast.LENGTH_LONG).show();
+        }
+        
         setContentView(R.layout.activity_login2);
+        Log.d("FIREBASE_CHECK",
+                FirebaseApp.getInstance().getOptions().getProjectId());
+
 
         loginPhoneNumber = findViewById(R.id.loginPhoneNumber);
         loginPassword = findViewById(R.id.loginPassword);
@@ -161,13 +176,29 @@ public class LoginActivity extends AppCompatActivity {
                     Toast.makeText(LoginActivity.this, "Field is Empty", Toast.LENGTH_SHORT).show();
                     progressBar.setVisibility(View.GONE);
                 }else{
-                    firebaseAuth.signInWithEmailAndPassword(phoneNumber + Email_Extension, password)
+                    String email = phoneNumber + Email_Extension;
+                    
+                    // ===== DEBUG LOGGING =====
+                    Log.w("Login_DEBUG", "========== LOGIN ATTEMPT ==========");
+                    Log.w("Login_DEBUG", "Email: " + email);
+                    Log.w("Login_DEBUG", "Phone Number: " + phoneNumber);
+                    Log.w("Login_DEBUG", "Firebase Project: " + 
+                        com.google.firebase.FirebaseApp.getInstance().getOptions().getProjectId());
+                    Log.w("Login_DEBUG", "Firebase DB URL: " + 
+                        com.google.firebase.FirebaseApp.getInstance().getOptions().getDatabaseUrl());
+                    Log.w("Login_DEBUG", "====================================");
+                    
+                    firebaseAuth.signInWithEmailAndPassword(email, password)
                             .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                                 @Override
                                 public void onComplete(@NonNull Task<AuthResult> task) {
                                     if (task.isSuccessful()) {
                                         // Sign in success, update UI with the signed-in user's information
-//                                        FirebaseUser user = firebaseAuth.getCurrentUser();
+                                        FirebaseUser user = firebaseAuth.getCurrentUser();
+                                        
+                                        Log.w("Login_SUCCESS", "✓ Login successful");
+                                        Log.w("Login_SUCCESS", "User UID: " + (user != null ? user.getUid() : "null"));
+                                        Log.w("Login_SUCCESS", "User Email: " + (user != null ? user.getEmail() : "null"));
 
                                         //switch to main activity
                                         Intent intent = new Intent(LoginActivity.this, ConversationMainActivityLists.class);
@@ -176,7 +207,17 @@ public class LoginActivity extends AppCompatActivity {
                                         finish();
 
                                     } else {
-                                        // If sign in fails, display a message to the user.
+                                        // ===== DETAILED ERROR LOGGING =====
+                                        Exception exception = task.getException();
+                                        String errorMsg = exception != null ? exception.getMessage() : "Unknown error";
+                                        
+                                        Log.e("Login_ERROR", "========== LOGIN FAILED ==========");
+                                        Log.e("Login_ERROR", "Error: " + errorMsg);
+                                        Log.e("Login_ERROR", "Exception: " + (exception != null ? exception.getClass().getSimpleName() : "Unknown"));
+                                        Log.e("Login_ERROR", "Firebase Project: " + 
+                                            com.google.firebase.FirebaseApp.getInstance().getOptions().getProjectId());
+                                        Log.e("Login_ERROR", "==================================");
+                                        
                                         Toast.makeText(LoginActivity.this, "Authentication failed.",
                                                 Toast.LENGTH_SHORT).show();
                                         progressBar.setVisibility(View.GONE);

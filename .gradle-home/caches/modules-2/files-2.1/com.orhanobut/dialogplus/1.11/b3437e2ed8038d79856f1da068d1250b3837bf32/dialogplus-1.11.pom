@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.orhanobut</groupId>
+  <artifactId>dialogplus</artifactId>
+  <version>1.11</version>
+  <packaging>aar</packaging>
+  <name>DialogPlus</name>
+  <description>Android simple dialog</description>
+  <url>https://github.com/orhanobut/dialogplus</url>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>nr4bt</id>
+      <name>Orhan Obut</name>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git@https://github.com/orhanobut/dialogplus.git</connection>
+    <developerConnection>scm:git@https://github.com/orhanobut/dialogplus.git</developerConnection>
+    <url>https://github.com/orhanobut/dialogplus</url>
+  </scm>
+</project>

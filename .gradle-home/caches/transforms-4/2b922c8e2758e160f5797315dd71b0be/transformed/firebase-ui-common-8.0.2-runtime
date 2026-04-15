@@ -1,0 +1,7 @@
+com.firebase.ui.common.BaseCachingSnapshotParser
+com.firebase.ui.common.BaseChangeEventListener
+com.firebase.ui.common.BaseObservableSnapshotArray
+com.firebase.ui.common.BaseSnapshotParser
+com.firebase.ui.common.BuildConfig
+com.firebase.ui.common.ChangeEventType
+com.firebase.ui.common.Preconditions

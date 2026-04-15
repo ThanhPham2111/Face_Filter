@@ -11,6 +11,7 @@ import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -20,11 +21,13 @@ import android.widget.Toast;
 
 import static com.example.chatapp.Globals.*;
 import com.example.chatapp.ConversationMainActivityLists;
+import com.example.chatapp.FirebaseHelper;
 import com.example.chatapp.Globals;
 import com.example.chatapp.R;
 import com.example.chatapp.login.LoginActivity;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -47,6 +50,19 @@ public class SignUpActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // ===== FIREBASE VERIFICATION =====
+        // Step 1: Verify we're connected to the CORRECT Firebase project
+        try {
+            FirebaseHelper.verifyProjectConfiguration();
+        } catch (RuntimeException e) {
+            Log.e("SignUp", "CRITICAL: Firebase config error - " + e.getMessage());
+            Toast.makeText(this, "Firebase configuration error. Check logs.", Toast.LENGTH_LONG).show();
+        }
+        
+        // Step 2: Clear any cached auth state from old Firebase project
+        FirebaseHelper.clearAuthCache();
+        
         setContentView(R.layout.activity_sign_up);
 
         signUpName = findViewById(R.id.signUpName);
@@ -167,14 +183,30 @@ public class SignUpActivity extends AppCompatActivity {
                     Toast.makeText(SignUpActivity.this, "Field is Empty", Toast.LENGTH_SHORT).show();
                     progressBar.setVisibility(View.GONE);
                 }else{
-                    firebaseAuth.createUserWithEmailAndPassword(phoneNumber + Email_Extension, password)
+                    String email = phoneNumber + Email_Extension;
+                    
+                    // ===== DEBUG LOGGING =====
+                    Log.w("SignUp_DEBUG", "========== REGISTRATION ATTEMPT ==========");
+                    Log.w("SignUp_DEBUG", "Email: " + email);
+                    Log.w("SignUp_DEBUG", "Phone Number: " + phoneNumber);
+                    Log.w("SignUp_DEBUG", "Firebase Project: " + 
+                        FirebaseApp.getInstance().getOptions().getProjectId());
+                    Log.w("SignUp_DEBUG", "Firebase DB URL: " + 
+                        FirebaseApp.getInstance().getOptions().getDatabaseUrl());
+                    Log.w("SignUp_DEBUG", "=========================================");
+                    
+                    firebaseAuth.createUserWithEmailAndPassword(email, password)
                             .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                                 @Override
                                 public void onComplete(@NonNull Task<AuthResult> task) {
                                     if (task.isSuccessful()) {
                                         // Sign in success, update UI with the signed-in user's information
                                         FirebaseUser user = firebaseAuth.getCurrentUser();
-                                        //
+                                        
+                                        Log.w("SignUp_SUCCESS", "✓ Registration successful");
+                                        Log.w("SignUp_SUCCESS", "User UID: " + (user != null ? user.getUid() : "null"));
+                                        Log.w("SignUp_SUCCESS", "User Email: " + (user != null ? user.getEmail() : "null"));
+                                        
                                         if(!isPersistenceEnabled){
                                             FirebaseDatabase.getInstance().setPersistenceEnabled(true);
                                             isPersistenceEnabled = true;
@@ -189,9 +221,29 @@ public class SignUpActivity extends AppCompatActivity {
                                         startActivity(intent);
                                         finish();
                                     } else {
-                                        // If sign in fails, display a message to the user.
-                                        Toast.makeText(SignUpActivity.this, "Authentication failed. User Already Exists",
-                                                Toast.LENGTH_SHORT).show();
+                                        // ===== DETAILED ERROR LOGGING =====
+                                        Exception exception = task.getException();
+                                        String errorMsg = exception != null ? exception.getMessage() : "Unknown error";
+                                        String errorClass = exception != null ? exception.getClass().getSimpleName() : "Unknown";
+                                        
+                                        Log.e("SignUp_ERROR", "========== REGISTRATION FAILED ==========");
+                                        Log.e("SignUp_ERROR", "Error Message: " + errorMsg);
+                                        Log.e("SignUp_ERROR", "Exception Type: " + errorClass);
+                                        Log.e("SignUp_ERROR", "Current Firebase Project: " + 
+                                            FirebaseApp.getInstance().getOptions().getProjectId());
+                                        
+                                        // Check if error indicates old project
+                                        if (errorMsg.contains("already exists") || 
+                                            errorMsg.contains("already in use") ||
+                                            errorMsg.contains("Email already in use")) {
+                                            Log.e("SignUp_ERROR", "⚠️  LIKELY CAUSE: User email exists in Firebase project");
+                                            Log.e("SignUp_ERROR", "Check if Firebase is connected to CORRECT project (not old one)");
+                                        }
+                                        Log.e("SignUp_ERROR", "========================================");
+                                        
+                                        Toast.makeText(SignUpActivity.this, 
+                                            "Authentication failed: " + errorMsg,
+                                            Toast.LENGTH_SHORT).show();
                                         progressBar.setVisibility(View.GONE);
                                     }
                                 }

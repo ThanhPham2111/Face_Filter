@@ -1,6 +1,8 @@
 package com.example.chatapp.conversation;
 
 import static com.example.chatapp.Globals.MESSAGE_SENDER;
+import static com.example.chatapp.Globals.extractUserIdFromEmail;
+import static com.example.chatapp.Globals.formatPhoneNumber;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -10,6 +12,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Base64;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -38,6 +41,7 @@ import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -65,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
     private View uploadStatusContainer;
 
     private String receiverId;
+    private String receiverIdForResult;
     private String receiverName;
     private int recyclerViewItemId;
     private IChatInterface dao;
@@ -95,7 +100,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         Intent intent = getIntent();
-        receiverId = intent.getStringExtra("id");
+        receiverIdForResult = intent.getStringExtra("id");
+        receiverId = normalizeConversationId(receiverIdForResult);
         receiverName = intent.getStringExtra("name");
         recyclerViewItemId = intent.getIntExtra("recyclerViewItemId", -1);
 
@@ -138,16 +144,27 @@ public class MainActivity extends AppCompatActivity {
                 .child(receiverId == null ? "unknown" : receiverId);
     }
 
+    private String normalizeConversationId(String rawId) {
+        if (rawId == null) {
+            return "";
+        }
+        String formatted = formatPhoneNumber(rawId);
+        if (!"-1".equals(formatted)) {
+            return formatted;
+        }
+        return rawId.trim();
+    }
+
     private String resolveCurrentUserKey() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null || user.getEmail() == null) {
             return "anonymous";
         }
-        String email = user.getEmail();
-        if (email.length() >= 11) {
-            return email.substring(0, 11);
+        String userId = extractUserIdFromEmail(user.getEmail());
+        if (!userId.isEmpty()) {
+            return userId;
         }
-        return email.replaceAll("[^a-zA-Z0-9_\\-]", "_");
+        return user.getEmail().replaceAll("[^a-zA-Z0-9_\\-]", "_");
     }
 
     private void setupImagePicker() {
@@ -256,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> {
                     currentUploadTask = null;
                     showUploadState(false, "");
-                    Toast.makeText(this, "Gui anh that bai", Toast.LENGTH_SHORT).show();
+                    sendImageMessageInlineFallback(imageBytes, e);
                 })
                 .addOnCanceledListener(() -> {
                     currentUploadTask = null;
@@ -373,10 +390,11 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        uploadVoiceRecording(Uri.fromFile(voiceFile), durationMs);
+        uploadVoiceRecording(voiceFile, durationMs);
     }
 
-    private void uploadVoiceRecording(Uri voiceUri, int durationMs) {
+    private void uploadVoiceRecording(File voiceFile, int durationMs) {
+        Uri voiceUri = Uri.fromFile(voiceFile);
         String voiceName = "voice_" + System.currentTimeMillis() + ".m4a";
         StorageReference voiceRef = mediaStorageRef.child("voices").child(voiceName);
         StorageMetadata metadata = new StorageMetadata.Builder()
@@ -391,9 +409,8 @@ public class MainActivity extends AppCompatActivity {
                 .addOnProgressListener(taskSnapshot -> updateUploadProgress("Dang tai voice", taskSnapshot))
                 .addOnFailureListener(e -> {
                     currentUploadTask = null;
-                    deleteRecordingFileIfExists();
+                    sendVoiceMessageInlineFallback(voiceFile, durationMs, e);
                     showUploadState(false, "");
-                    Toast.makeText(this, "Gui voice that bai", Toast.LENGTH_SHORT).show();
                 })
                 .addOnCanceledListener(() -> {
                     currentUploadTask = null;
@@ -463,6 +480,70 @@ public class MainActivity extends AppCompatActivity {
         newMessage.save(receiverId);
         mAdaptor.notifyDataSetChanged();
         recyclerViewMessageLists.scrollToPosition(mAdaptor.getItemCount() - 1);
+    }
+
+    private void sendImageMessageInlineFallback(byte[] imageBytes, Exception uploadError) {
+        String base64Payload = Base64.encodeToString(imageBytes, Base64.NO_WRAP);
+        timeStamp = System.currentTimeMillis();
+        Message newMessage = new Message(
+                MESSAGE_SENDER,
+                "",
+                timeStamp,
+                0,
+                Message.CONTENT_IMAGE,
+                base64Payload,
+                0,
+                dao
+        );
+        appendMessage(newMessage);
+        Toast.makeText(this, "Storage loi, da gui anh truc tiep", Toast.LENGTH_SHORT).show();
+    }
+
+    private void sendVoiceMessageInlineFallback(File voiceFile, int durationMs, Exception uploadError) {
+        try {
+            byte[] voiceBytes = readBytesFromFile(voiceFile);
+            if (voiceBytes.length == 0) {
+                Toast.makeText(this, "Gui voice that bai", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String base64Payload = Base64.encodeToString(voiceBytes, Base64.NO_WRAP);
+            timeStamp = System.currentTimeMillis();
+            Message newMessage = new Message(
+                    MESSAGE_SENDER,
+                    "",
+                    timeStamp,
+                    0,
+                    Message.CONTENT_VOICE,
+                    base64Payload,
+                    durationMs,
+                    dao
+            );
+            appendMessage(newMessage);
+            Toast.makeText(this, "Storage loi, da gui voice truc tiep", Toast.LENGTH_SHORT).show();
+        } catch (IOException ioException) {
+            Toast.makeText(this, "Gui voice that bai", Toast.LENGTH_SHORT).show();
+        } finally {
+            deleteRecordingFileIfExists();
+        }
+    }
+
+    private byte[] readBytesFromFile(File file) throws IOException {
+        if (file == null || !file.exists()) {
+            return new byte[0];
+        }
+        byte[] buffer = new byte[(int) file.length()];
+        try (FileInputStream fis = new FileInputStream(file)) {
+            int read = fis.read(buffer);
+            if (read <= 0) {
+                return new byte[0];
+            }
+            if (read < buffer.length) {
+                byte[] exact = new byte[read];
+                System.arraycopy(buffer, 0, exact, 0, read);
+                return exact;
+            }
+            return buffer;
+        }
     }
 
     private byte[] compressImageToJpegBytes(Uri uri, int maxDimension, int quality) throws IOException {
@@ -565,7 +646,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         Intent intent = new Intent();
-        intent.putExtra("id", receiverId);
+        intent.putExtra("id", receiverIdForResult == null ? receiverId : receiverIdForResult);
         String lastMessage = SRMessages.size() == 0 ? "" : SRMessages.get(SRMessages.size() - 1).getPreviewText();
         intent.putExtra("lastMessage", lastMessage);
         intent.putExtra("timeStamp", timeStamp);

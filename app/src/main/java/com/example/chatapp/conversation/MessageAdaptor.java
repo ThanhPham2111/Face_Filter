@@ -58,7 +58,7 @@ public class MessageAdaptor extends RecyclerView.Adapter<MessageAdaptor.MessageV
     };
 
     public MessageAdaptor(ArrayList<Message> messages) {
-        this.messages = messages;
+        this.messages = messages != null ? messages : new ArrayList<>();
     }
 
     @Override
@@ -303,15 +303,18 @@ public class MessageAdaptor extends RecyclerView.Adapter<MessageAdaptor.MessageV
         if (mediaPayload == null || mediaPayload.isEmpty()) {
             return null;
         }
+        try {
+            byte[] raw = Base64.decode(mediaPayload, Base64.DEFAULT);
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeByteArray(raw, 0, raw.length, options);
 
-        byte[] raw = Base64.decode(mediaPayload, Base64.DEFAULT);
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeByteArray(raw, 0, raw.length, options);
-
-        options.inJustDecodeBounds = false;
-        options.inSampleSize = calculateInSampleSize(options, 720, 720);
-        return BitmapFactory.decodeByteArray(raw, 0, raw.length, options);
+            options.inJustDecodeBounds = false;
+            options.inSampleSize = calculateInSampleSize(options, 720, 720);
+            return BitmapFactory.decodeByteArray(raw, 0, raw.length, options);
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
     }
 
     private int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {

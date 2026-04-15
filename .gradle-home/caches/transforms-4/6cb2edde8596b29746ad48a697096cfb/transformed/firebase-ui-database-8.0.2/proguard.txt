@@ -1,0 +1,27 @@
+-dontwarn com.firebase.ui.database.paging.**
+
+# Generated keep rule for Lifecycle observer adapter.
+-if class com.firebase.ui.database.FirebaseListAdapter {
+    <init>(...);
+}
+-keep class com.firebase.ui.database.FirebaseListAdapter_LifecycleAdapter {
+    <init>(...);
+}
+
+# Generated keep rule for Lifecycle observer adapter.
+-if class com.firebase.ui.database.paging.FirebaseRecyclerPagingAdapter {
+    <init>(...);
+}
+-keep class com.firebase.ui.database.paging.FirebaseRecyclerPagingAdapter_LifecycleAdapter {
+    <init>(...);
+}
+
+# Generated keep rule for Lifecycle observer adapter.
+-if class com.firebase.ui.database.FirebaseRecyclerAdapter {
+    <init>(...);
+}
+-keep class com.firebase.ui.database.FirebaseRecyclerAdapter_LifecycleAdapter {
+    <init>(...);
+}
+
+

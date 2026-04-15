@@ -1,0 +1,125 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-coroutines-rx3",
+    "version": "1.4.3",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "6.7.1",
+      "buildId": "3wriqa3ax5c4rcfwqabmdy3weu"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.localToProject": "public",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-coroutines-core",
+          "version": {
+            "requires": "1.4.3"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-coroutines-reactive",
+          "version": {
+            "requires": "1.4.3"
+          }
+        },
+        {
+          "group": "io.reactivex.rxjava3",
+          "module": "rxjava",
+          "version": {
+            "requires": "3.0.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-jdk8",
+          "version": {
+            "requires": "1.4.30"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-rx3-1.4.3.jar",
+          "url": "kotlinx-coroutines-rx3-1.4.3.jar",
+          "size": 71821,
+          "sha512": "c2dd91aee35e817ae5e0e41e6b36aed281dd4658913e353bfee39d8c79f2acff3de5c60c40e36504ff01db759eefbd9923e5f28d3c5bc120d09d6fb7dbe09ee7",
+          "sha256": "c56dfea4e702122b8f6dfda129a3a91367fad1fb4ac3830676148c4bb8bfe2af",
+          "sha1": "35b549ad996e1aa358723a7e36ccd55486be4b0d",
+          "md5": "79eedd715745c1c90f0453775aa04173"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.localToProject": "public",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-coroutines-core",
+          "version": {
+            "requires": "1.4.3"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-coroutines-reactive",
+          "version": {
+            "requires": "1.4.3"
+          }
+        },
+        {
+          "group": "io.reactivex.rxjava3",
+          "module": "rxjava",
+          "version": {
+            "requires": "3.0.2"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-jdk8",
+          "version": {
+            "requires": "1.4.30"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-rx3-1.4.3.jar",
+          "url": "kotlinx-coroutines-rx3-1.4.3.jar",
+          "size": 71821,
+          "sha512": "c2dd91aee35e817ae5e0e41e6b36aed281dd4658913e353bfee39d8c79f2acff3de5c60c40e36504ff01db759eefbd9923e5f28d3c5bc120d09d6fb7dbe09ee7",
+          "sha256": "c56dfea4e702122b8f6dfda129a3a91367fad1fb4ac3830676148c4bb8bfe2af",
+          "sha1": "35b549ad996e1aa358723a7e36ccd55486be4b0d",
+          "md5": "79eedd715745c1c90f0453775aa04173"
+        }
+      ]
+    }
+  ]
+}

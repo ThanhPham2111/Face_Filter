@@ -1,0 +1,12 @@
+androidx.paging.rxjava3.PagingRx
+androidx.paging.rxjava3.PagingRx__PagingRxKt
+androidx.paging.rxjava3.PagingRx__RxPagingDataKt
+androidx.paging.rxjava3.PagingRx__RxPagingDataKt$filterAsync$1
+androidx.paging.rxjava3.PagingRx__RxPagingDataKt$flatMapAsync$1
+androidx.paging.rxjava3.PagingRx__RxPagingDataKt$insertSeparatorsAsync$1
+androidx.paging.rxjava3.PagingRx__RxPagingDataKt$mapAsync$1
+androidx.paging.rxjava3.RxPagingSource
+androidx.paging.rxjava3.RxPagingSource$load$1
+androidx.paging.rxjava3.RxRemoteMediator
+androidx.paging.rxjava3.RxRemoteMediator$initialize$1
+androidx.paging.rxjava3.RxRemoteMediator$load$1

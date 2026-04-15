@@ -1,8 +1,33 @@
 package com.example.chatapp;
 
-import static com.example.chatapp.Globals.*;
+import static com.example.chatapp.Globals.formatPhoneNumber;
+import static com.example.chatapp.Globals.isPersistenceEnabled;
+import static com.example.chatapp.Globals.verifyPhoneNumber;
 import static com.example.chatapp.R.drawable.rounded;
 import static com.example.chatapp.R.drawable.rounded_background;
+
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.ContentResolver;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.graphics.Color;
+import android.net.Uri;
+import android.os.Bundle;
+import android.provider.ContactsContract;
+import android.util.Log;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
@@ -20,68 +45,37 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.annotation.SuppressLint;
-import android.content.ContentResolver;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.graphics.Color;
-import android.net.Uri;
-import android.os.Bundle;
-import android.provider.ContactsContract;
-import android.util.Log;
-import android.util.TypedValue;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.Adapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.widget.Toast;
-import android.Manifest;
-
-
 import com.example.chatapp.contacts.Contact;
 import com.example.chatapp.contacts.ContactAdaptor;
 import com.example.chatapp.conversation.MainActivity;
-import com.example.chatapp.conversation.MessageViewModel;
 import com.example.chatapp.firebaseDb.ChatFirebaseDAO;
 import com.example.chatapp.login.LoginActivity;
-import com.example.chatapp.sqliteDB.ChatDbDAO;
-import com.example.chatapp.sqliteDB.MyDataBaseHelper;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.FirebaseDatabase;
 import com.orhanobut.dialogplus.DialogPlus;
-import com.orhanobut.dialogplus.DialogPlusBuilder;
-import com.orhanobut.dialogplus.OnClickListener;
 import com.orhanobut.dialogplus.ViewHolder;
 
 import java.util.ArrayList;
 import java.util.Objects;
 
-public class ConversationMainActivityLists extends AppCompatActivity implements ConversationAdaptor.SelectItemListener, ContactAdaptor.SelectItemListenerContact{
+public class ConversationMainActivityLists extends AppCompatActivity implements ConversationAdaptor.SelectItemListener, ContactAdaptor.SelectItemListenerContact {
 
     RecyclerView recyclerView;
     FloatingActionButton add_Button;
     FloatingActionButton remove_db_button;
+    ImageButton logoutBtn;
 
     IChatInterface dao;
-    public ArrayList<Person>  personsList;
+    public ArrayList<Person> personsList;
     ConversationViewModel vm;
 
     ConversationAdaptor myAdapt;
-    ConversationAdaptor.SelectItemListener listener;
     ActivityResultLauncher<Intent> conversation_activity_launcher;
 
     //alert box
     AlertDialog.Builder removeBuilder;
-    EditText input;
     AlertDialog removeDialog;
     int recyclerViewItemIdForDeletion;
 
@@ -107,8 +101,10 @@ public class ConversationMainActivityLists extends AppCompatActivity implements 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_conversation_main_lists);
+
         //firebase Auth
-        if(!isPersistenceEnabled){
+        if (!isPersistenceEnabled) {
             FirebaseDatabase.getInstance().setPersistenceEnabled(true);
             isPersistenceEnabled = true;
         }
@@ -122,9 +118,6 @@ public class ConversationMainActivityLists extends AppCompatActivity implements 
             }
         });
 
-
-        setContentView(R.layout.activity_conversation_main_lists);
-
         //connect databases
         //sqlite
 //        dao = new ChatDbDAO(this);
@@ -134,19 +127,26 @@ public class ConversationMainActivityLists extends AppCompatActivity implements 
         vm = new ViewModelProvider(this).get(ConversationViewModel.class);
         vm.setDao(dao);
         personsList = vm.getConversations(savedInstanceState, "data");
+
+        // Ensure personsList is never null
+        if (personsList == null) {
+            personsList = new ArrayList<>();
+        }
 //        personsList = Person.load(dao);
 //        personsList = new ArrayList<>();
 
         recyclerView = findViewById(R.id.ConversationMessageLists);
         add_Button = findViewById(R.id.floating_add_button);
+        logoutBtn = findViewById(R.id.logoutBtn);
         add_Button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 addDialog.show();
             }
         });
+        logoutBtn.setOnClickListener(v -> performLogout());
 
-        myAdapt = new ConversationAdaptor(ConversationMainActivityLists.this, personsList, this );
+        myAdapt = new ConversationAdaptor(ConversationMainActivityLists.this, personsList, this);
         recyclerView.setLayoutManager(new LinearLayoutManager(ConversationMainActivityLists.this));
         recyclerView.setAdapter(myAdapt);
 
@@ -156,27 +156,29 @@ public class ConversationMainActivityLists extends AppCompatActivity implements 
                     @SuppressLint("NotifyDataSetChanged")
                     @Override
                     public void onActivityResult(ActivityResult result) {
-                        if(result.getResultCode() == RESULT_OK){
+                        if (result.getResultCode() == RESULT_OK) {
                             Intent data = result.getData();
-                            String personId = data.getStringExtra("id");
-                            String personLastMessage = data.getStringExtra("lastMessage");
-                            long personTimeStamp = data.getLongExtra("timeStamp", -1);
-                            int recyclerViewItemId = data.getIntExtra("recyclerViewItemId", -1);
+                            if (data != null) {
+                                String personId = data.getStringExtra("id");
+                                String personLastMessage = data.getStringExtra("lastMessage");
+                                long personTimeStamp = data.getLongExtra("timeStamp", -1);
+                                int recyclerViewItemId = data.getIntExtra("recyclerViewItemId", -1);
 
-                            if(personTimeStamp != -1 && !Objects.equals(personLastMessage, "" ) && recyclerViewItemId != -1){
-                                for (Person person :
-                                        personsList) {
-                                    if(Objects.equals(person.getId(), personId)){
-                                        person.update(personLastMessage, personTimeStamp, MessageType.SENT.toString());
-                                        break;
+                                if (personTimeStamp != -1 && !Objects.equals(personLastMessage, "") && recyclerViewItemId != -1) {
+                                    for (Person person :
+                                            personsList) {
+                                        if (Objects.equals(person.getId(), personId)) {
+                                            person.update(personLastMessage, personTimeStamp, MessageType.SENT.toString());
+                                            break;
+                                        }
                                     }
+                                    //move person to the top of the list
+                                    Person updatedItem = personsList.remove(recyclerViewItemId);
+                                    personsList.add(0, updatedItem);
+                                    refresh();
                                 }
-                                //move person to the top of the list
-                                Person updatedItem = personsList.remove(recyclerViewItemId);
-                                personsList.add(0, updatedItem);
-                                refresh();
+                                myAdapt.notifyDataSetChanged();
                             }
-                            myAdapt.notifyDataSetChanged();
                         }
                     }
                 }
@@ -194,20 +196,23 @@ public class ConversationMainActivityLists extends AppCompatActivity implements 
                 .create();
 
         View view = dialogPlus.getHolderView();
-        view.setBackgroundColor(ResourcesCompat.getColor(getResources(), R.color.Black1,null ));
+        view.setBackgroundColor(ResourcesCompat.getColor(getResources(), R.color.Black1, null));
         contactArrayList = new ArrayList<>();
         contactRecyclerView = view.findViewById(R.id.contactnamelists);
-        contactAdaptor = new ContactAdaptor( contactArrayList, this );
+        contactAdaptor = new ContactAdaptor(contactArrayList, this);
         contactRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         contactRecyclerView.setBackgroundResource(rounded);
         contactRecyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         contactRecyclerView.setAdapter(contactAdaptor);
     }
 
-    public void refresh(){
+    public void refresh() {
 //        NotesViewModel vm = new ViewModelProvider(getActivity()).get(NotesViewModel.class);
+        if (dao == null || myAdapt == null) {
+            return;
+        }
         personsList = Person.load(dao);
-        if (personsList != null){
+        if (personsList != null) {
             myAdapt.updateData(personsList);
         }
     }
@@ -230,7 +235,7 @@ public class ConversationMainActivityLists extends AppCompatActivity implements 
     }
 
     //alert box creating and handle
-    public void CreateAndHandleAlertBox(){
+    public void CreateAndHandleAlertBox() {
 
         // Create a new AlertDialog builder
         removeBuilder = new AlertDialog.Builder(this);
@@ -246,7 +251,7 @@ public class ConversationMainActivityLists extends AppCompatActivity implements 
         textView.setBackgroundColor(2839391);
         textView.setTextColor(Color.WHITE);
         textView.setGravity(Gravity.CENTER);
-        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP,20);
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
         textView.setHeight(250);
 
 
@@ -259,17 +264,16 @@ public class ConversationMainActivityLists extends AppCompatActivity implements 
             @Override
             public void onClick(View v) {
                 // Delete the conversation
-                ArrayList<Person> UpdatedList = new ArrayList<>();
-                if(isOneMessageOnHold){
-                    if(recyclerViewItemIdForDeletion != -1){
+                if (isOneMessageOnHold) {
+                    if (recyclerViewItemIdForDeletion != -1) {
                         Person dPerson = personsList.get(recyclerViewItemIdForDeletion);
                         personsList.remove(recyclerViewItemIdForDeletion);
                         dPerson.delete();
                         removeDialog.dismiss();
                     }
-                }else{
+                } else {
                     Person.deleteAll(dao);
-                    personsList.removeAll(personsList);
+                    personsList.clear();
                     removeDialog.dismiss();
                 }
                 myAdapt.notifyDataSetChanged();
@@ -301,11 +305,13 @@ public class ConversationMainActivityLists extends AppCompatActivity implements 
         removeDialog = removeBuilder.create();
 
         // Customize the dialog box background and corners
-        removeDialog.getWindow().setBackgroundDrawableResource(rounded_background);
+        if (removeDialog.getWindow() != null) {
+            removeDialog.getWindow().setBackgroundDrawableResource(rounded_background);
+        }
     }
 
     //Pop us for adding the user
-    public void UserAddingPop(){
+    public void UserAddingPop() {
 
         // Create a new AlertDialog builder
         addBuilder = new AlertDialog.Builder(this);
@@ -322,7 +328,7 @@ public class ConversationMainActivityLists extends AppCompatActivity implements 
         textView.setBackgroundColor(backgroundColor);
         textView.setTextColor(Color.WHITE);
         textView.setGravity(Gravity.CENTER);
-        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP,20);
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
 //        textView.setPadding(5,15,5,15);
         textView.setHeight(250);
 
@@ -330,16 +336,16 @@ public class ConversationMainActivityLists extends AppCompatActivity implements 
         textView.setBackgroundColor(backgroundColor);
         editTextName.setTextColor(Color.WHITE);
         editTextName.setGravity(Gravity.CENTER);
-        editTextName.setTextSize(TypedValue.COMPLEX_UNIT_SP,20);
-        editTextName.setHintTextColor(ResourcesCompat.getColor(getResources(), R.color.DimGray,null ));
+        editTextName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+        editTextName.setHintTextColor(ResourcesCompat.getColor(getResources(), R.color.DimGray, null));
         editTextName.setHint("Enter Name");
 
         EditText editTextPhoneNumber = new EditText(this);
         textView.setBackgroundColor(backgroundColor);
         editTextPhoneNumber.setTextColor(Color.WHITE);
         editTextPhoneNumber.setGravity(Gravity.CENTER);
-        editTextPhoneNumber.setTextSize(TypedValue.COMPLEX_UNIT_SP,20);
-        editTextPhoneNumber.setHintTextColor(ResourcesCompat.getColor(getResources(), R.color.DimGray,null ));
+        editTextPhoneNumber.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+        editTextPhoneNumber.setHintTextColor(ResourcesCompat.getColor(getResources(), R.color.DimGray, null));
         editTextPhoneNumber.setHint("Enter Number");
 
         // Create the "Delete" button
@@ -350,30 +356,31 @@ public class ConversationMainActivityLists extends AppCompatActivity implements 
         AddButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(editTextName.getText().toString().trim().equals("") || editTextPhoneNumber.getText().toString().trim().equals("")){
+                if (editTextName.getText().toString().trim().equals("") || editTextPhoneNumber.getText().toString().trim().equals("")) {
                     Toast.makeText(ConversationMainActivityLists.this, "Field is empty", Toast.LENGTH_SHORT).show();
-                }else{
+                } else {
                     Person newPerson;
 
                     String phoneNumber_ID = editTextPhoneNumber.getText().toString().trim();
-                    if(verifyPhoneNumber(phoneNumber_ID)){
-                        if(formatPhoneNumber(phoneNumber_ID).equals("-1")){
+                    if (verifyPhoneNumber(phoneNumber_ID)) {
+                        String formatted = formatPhoneNumber(phoneNumber_ID);
+                        if (formatted.equals("-1")) {
                             Toast.makeText(ConversationMainActivityLists.this, "Invalid Phone Number", Toast.LENGTH_SHORT).show();
-                        }else{
+                        } else {
                             //add phone Number Verification;
-                            if(dao instanceof ChatFirebaseDAO){
+                            if (dao instanceof ChatFirebaseDAO) {
                                 long timeStamp = System.currentTimeMillis();
-                                newPerson = new Person(phoneNumber_ID,editTextName.getText().toString().trim(), "" ,timeStamp,MessageType.SENT.toString(),dao);
-                            }else{
-                                newPerson = new Person(phoneNumber_ID,editTextName.getText().toString().trim(), dao);
+                                newPerson = new Person(formatted, editTextName.getText().toString().trim(), "", timeStamp, MessageType.SENT.toString(), dao);
+                            } else {
+                                newPerson = new Person(formatted, editTextName.getText().toString().trim(), dao);
                             }
                             newPerson.save();
                             editTextName.setText("");
                             editTextPhoneNumber.setText("");
-                            personsList.add(0,newPerson);
+                            personsList.add(0, newPerson);
                             myAdapt.notifyDataSetChanged();
                         }
-                    }else{
+                    } else {
                         Toast.makeText(ConversationMainActivityLists.this, "Invalid Phone Number", Toast.LENGTH_SHORT).show();
                     }
 
@@ -409,12 +416,14 @@ public class ConversationMainActivityLists extends AppCompatActivity implements 
         addDialog = addBuilder.create();
 
         // Customize the dialog box background and corners
-        addDialog.getWindow().setBackgroundDrawableResource(rounded_background);
+        if (addDialog.getWindow() != null) {
+            addDialog.getWindow().setBackgroundDrawableResource(rounded_background);
+        }
 
     }
 
 
-    public boolean onCreateOptionsMenu(Menu menu){
+    public boolean onCreateOptionsMenu(Menu menu) {
         //Inflating menu
         getMenuInflater().inflate(R.menu.main_page_menu, menu);
 
@@ -423,45 +432,43 @@ public class ConversationMainActivityLists extends AppCompatActivity implements 
 
         //adding search view in menu
         SearchView searchView = (SearchView) search_button.getActionView();
-        searchView.setQueryHint("Search...");
+        if (searchView != null) {
+            searchView.setQueryHint("Search...");
 
-        //adding on text change listener in search view
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                if(myAdapt instanceof ConversationAdaptor){
-                    ConversationAdaptor mA = (ConversationAdaptor) myAdapt;
-                    mA.getFilter().filter(newText.toString());
+            //adding on text change listener in search view
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    return false;
                 }
-                return true;
-            }
-        });
+
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    if (myAdapt != null) {
+                        myAdapt.getFilter().filter(newText);
+                    }
+                    return true;
+                }
+            });
+        }
 
         return true;
 
     }
 
     @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item){
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
 
         if (item.getItemId() == R.id.clearChat) {
             isOneMessageOnHold = false;
             removeDialog.show();
             return true;
-        }else if(item.getItemId() == R.id.logoutUser){
-            FirebaseAuth.getInstance().signOut();
-            Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-            startActivity(intent);
-            finish();
-        }else if(item.getItemId() == R.id.contacts1){
+        } else if (item.getItemId() == R.id.logoutUser) {
+            performLogout();
+        } else if (item.getItemId() == R.id.contacts1) {
             Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
             startActivityForResult(intent, CONTACT_PICKER_REQUEST);
-        }else if(item.getItemId() == R.id.contacts2){
+        } else if (item.getItemId() == R.id.contacts2) {
             getPhoneContacts();
             showContactPopUp();
         }
@@ -471,70 +478,75 @@ public class ConversationMainActivityLists extends AppCompatActivity implements 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == CONTACT_PICKER_REQUEST && resultCode == RESULT_OK) {
+        if (requestCode == CONTACT_PICKER_REQUEST && resultCode == RESULT_OK && data != null) {
             // The user selected a contact
             Uri contactUri = data.getData();
 
             // Use the contactUri to query the contact data
-            Cursor cursor = getContentResolver().query(contactUri, null, null, null, null);
-            if (cursor != null && cursor.moveToFirst()) {
-                // Get the contact name and phone number
-                @SuppressLint("Range") String name = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
-                @SuppressLint("Range") String phoneNumber = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+            if (contactUri != null) {
+                Cursor cursor = getContentResolver().query(contactUri, null, null, null, null);
+                if (cursor != null && cursor.moveToFirst()) {
+                    // Get the contact name and phone number
+                    @SuppressLint("Range") String name = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                    @SuppressLint("Range") String phoneNumber = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
 
-                if(verifyPhoneNumber(phoneNumber)){
-                    String phoneNumber_ID = formatPhoneNumber(phoneNumber);
-                    if(phoneNumber_ID.equals("-1")){
-                        Toast.makeText(ConversationMainActivityLists.this, "Invalid Phone Number", Toast.LENGTH_SHORT).show();
-                    }else{
-                        Person newPerson;
-                        if(dao instanceof ChatFirebaseDAO){
-                            long timeStamp = System.currentTimeMillis();
-                            newPerson = new Person(phoneNumber_ID,name, "" ,timeStamp,MessageType.SENT.toString(),dao);
-                        }else{
-                            newPerson = new Person(phoneNumber_ID,name, dao);
+                    if (verifyPhoneNumber(phoneNumber)) {
+                        String phoneNumber_ID = formatPhoneNumber(phoneNumber);
+                        if (phoneNumber_ID.equals("-1")) {
+                            Toast.makeText(ConversationMainActivityLists.this, "Invalid Phone Number", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Person newPerson;
+                            if (dao instanceof ChatFirebaseDAO) {
+                                long timeStamp = System.currentTimeMillis();
+                                newPerson = new Person(phoneNumber_ID, name, "", timeStamp, MessageType.SENT.toString(), dao);
+                            } else {
+                                newPerson = new Person(phoneNumber_ID, name, dao);
+                            }
+                            newPerson.save();
+                            personsList.add(0, newPerson);
+                            myAdapt.notifyDataSetChanged();
                         }
-                        newPerson.save();
-                        personsList.add(0,newPerson);
-                        myAdapt.notifyDataSetChanged();
+                    } else {
+                        Toast.makeText(ConversationMainActivityLists.this, "Invalid Phone Number", Toast.LENGTH_SHORT).show();
                     }
-                }else{
-                    Toast.makeText(ConversationMainActivityLists.this, "Invalid Phone Number", Toast.LENGTH_SHORT).show();
-                }
 
-                cursor.close();
+                    cursor.close();
+                }
             }
         }
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    public void getPhoneContacts(){
-        contactArrayList.removeAll(contactArrayList);
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)!= PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_CONTACTS},0);
+    public void getPhoneContacts() {
+        contactArrayList.clear();
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_CONTACTS}, 0);
         }
         ContentResolver contentResolver = getContentResolver();
         Uri uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
         Cursor cursor = contentResolver.query(uri, null, null, null, null);
-        if(cursor.getCount() > 0){
-            while(cursor.moveToNext()){
-                @SuppressLint("Range")
-                String contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
-                @SuppressLint("Range")
-                String contactNumber = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+        if (cursor != null) {
+            if (cursor.getCount() > 0) {
+                while (cursor.moveToNext()) {
+                    @SuppressLint("Range")
+                    String contactName = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
+                    @SuppressLint("Range")
+                    String contactNumber = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
 
-                Contact newContact = new Contact(contactName, contactNumber);
-                contactArrayList.add(newContact);
+                    Contact newContact = new Contact(contactName, contactNumber);
+                    contactArrayList.add(newContact);
 
-                Log.d("ccccc", contactName + "---" + contactNumber);
+                    Log.d("ccccc", contactName + "---" + contactNumber);
+                }
+            } else {
+                Toast.makeText(this, "No Contact Exists", Toast.LENGTH_SHORT).show();
             }
-        }else{
-            Toast.makeText(this,"No Contact Exists", Toast.LENGTH_SHORT).show();
+            cursor.close();
         }
         contactAdaptor.notifyDataSetChanged();
     }
 
-    public void showContactPopUp(){
+    public void showContactPopUp() {
         dialogPlus.show();
     }
 
@@ -543,26 +555,33 @@ public class ConversationMainActivityLists extends AppCompatActivity implements 
         String contactNameId = contact.getName();
 
         String contactPhoneNumberID = formatPhoneNumber(contact.getPhoneNumber());
-        if(verifyPhoneNumber(contact.getPhoneNumber())){
-            if(contactPhoneNumberID.equals("-1")){
+        if (verifyPhoneNumber(contact.getPhoneNumber())) {
+            if (contactPhoneNumberID.equals("-1")) {
                 Toast.makeText(ConversationMainActivityLists.this, "Invalid Phone Number", Toast.LENGTH_SHORT).show();
-            }else{
+            } else {
                 Person newPerson;
                 //add phone Number Verification;
-                if(dao instanceof ChatFirebaseDAO){
+                if (dao instanceof ChatFirebaseDAO) {
                     long timeStamp = System.currentTimeMillis();
-                    newPerson = new Person(contactPhoneNumberID,contactNameId, "" ,timeStamp,MessageType.SENT.toString(),dao);
-                }else{
-                    newPerson = new Person(contactPhoneNumberID,contactNameId, dao);
+                    newPerson = new Person(contactPhoneNumberID, contactNameId, "", timeStamp, MessageType.SENT.toString(), dao);
+                } else {
+                    newPerson = new Person(contactPhoneNumberID, contactNameId, dao);
                 }
                 newPerson.save();
-                personsList.add(0,newPerson);
+                personsList.add(0, newPerson);
                 myAdapt.notifyDataSetChanged();
             }
-        }else{
+        } else {
             Toast.makeText(ConversationMainActivityLists.this, "Invalid Phone Number", Toast.LENGTH_SHORT).show();
         }
 
         dialogPlus.dismiss();
+    }
+
+    private void performLogout() {
+        FirebaseAuth.getInstance().signOut();
+        Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+        startActivity(intent);
+        finish();
     }
 }

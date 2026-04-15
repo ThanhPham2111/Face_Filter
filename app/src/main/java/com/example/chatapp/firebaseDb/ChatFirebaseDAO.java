@@ -1,20 +1,31 @@
 package com.example.chatapp.firebaseDb;
 
-import static com.example.chatapp.Globals.*;
+import static com.example.chatapp.Globals.CHAT_DB;
+import static com.example.chatapp.Globals.CONVERSATION_TABLE;
+import static com.example.chatapp.Globals.C_COLUMN_LAST_MESSAGE;
+import static com.example.chatapp.Globals.C_COLUMN_MESSAGE_TYPE;
+import static com.example.chatapp.Globals.C_COLUMN_NAME;
+import static com.example.chatapp.Globals.C_COLUMN_TIMESTAMP;
+import static com.example.chatapp.Globals.Full_Name;
+import static com.example.chatapp.Globals.MESSAGE_SENDER;
+import static com.example.chatapp.Globals.MESSAGE_TABLE;
+import static com.example.chatapp.Globals.M_COLUMN_CONTENT_TYPE;
+import static com.example.chatapp.Globals.M_COLUMN_C_ID;
+import static com.example.chatapp.Globals.M_COLUMN_DETAIL;
+import static com.example.chatapp.Globals.M_COLUMN_IS_SENDER;
+import static com.example.chatapp.Globals.M_COLUMN_MEDIA_DURATION;
+import static com.example.chatapp.Globals.M_COLUMN_MEDIA_PAYLOAD;
+import static com.example.chatapp.Globals.M_COLUMN_TIME;
+import static com.example.chatapp.Globals.M_COLUMN_USERNAME;
+import static com.example.chatapp.Globals.extractUserIdFromEmail;
+import static com.example.chatapp.Globals.formatPhoneNumber;
 
-import android.os.PowerManager;
 import android.util.Log;
-import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-
-import com.example.chatapp.ConversationMainActivityLists;
 import com.example.chatapp.IChatInterface;
 import com.example.chatapp.MessageType;
 import com.example.chatapp.Person;
 import com.example.chatapp.conversation.Message;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -48,13 +59,84 @@ public class ChatFirebaseDAO implements IChatInterface {
     String userPhoneNumber;
     String userName;
 
+    private String normalizeConversationId(String rawId) {
+        if (rawId == null) {
+            return "";
+        }
+        String formatted = formatPhoneNumber(rawId);
+        if (!"-1".equals(formatted)) {
+            return formatted;
+        }
+        return rawId.trim();
+    }
+
+    private String readStringValue(DataSnapshot parent, String key, String fallback) {
+        Object raw = parent.child(key).getValue();
+        if (raw == null) {
+            return fallback;
+        }
+        return String.valueOf(raw);
+    }
+
+    private long readLongValue(DataSnapshot parent, String key, long fallback) {
+        Object raw = parent.child(key).getValue();
+        if (raw == null) {
+            return fallback;
+        }
+        if (raw instanceof Number) {
+            return ((Number) raw).longValue();
+        }
+        try {
+            return Long.parseLong(String.valueOf(raw));
+        } catch (NumberFormatException ignore) {
+            return fallback;
+        }
+    }
+
+    private int readIntValue(DataSnapshot parent, String key, int fallback) {
+        Object raw = parent.child(key).getValue();
+        if (raw == null) {
+            return fallback;
+        }
+        if (raw instanceof Number) {
+            return ((Number) raw).intValue();
+        }
+        try {
+            return Integer.parseInt(String.valueOf(raw));
+        } catch (NumberFormatException ignore) {
+            return fallback;
+        }
+    }
+
     public ChatFirebaseDAO(DataObserver obs){
 
         //firebase auth and user
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
+        
+        // Check if user is authenticated
+        if (firebaseUser == null) {
+            Log.e("firebasedb", "User is not authenticated. Cannot initialize ChatFirebaseDAO.");
+            observer = obs;
+            database = FirebaseDatabase.getInstance();
+            return;
+        }
+        
         String email = firebaseUser.getEmail();
-        userPhoneNumber = email.substring(0,11);
+        if (email == null || email.trim().isEmpty()) {
+            Log.e("firebasedb", "Invalid email format from Firebase user.");
+            observer = obs;
+            database = FirebaseDatabase.getInstance();
+            return;
+        }
+
+        userPhoneNumber = extractUserIdFromEmail(email);
+        if (userPhoneNumber.isEmpty()) {
+            Log.e("firebasedb", "Cannot resolve user id from Firebase email.");
+            observer = obs;
+            database = FirebaseDatabase.getInstance();
+            return;
+        }
 
         observer = obs;
         database = FirebaseDatabase.getInstance();
@@ -92,10 +174,23 @@ public class ChatFirebaseDAO implements IChatInterface {
 
                     for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
                         String conversationId = childSnapshot.getKey();
-                        String lastMessage = childSnapshot.child(C_COLUMN_LAST_MESSAGE).getValue(String.class);
-                        String personName = childSnapshot.child(C_COLUMN_NAME).getValue(String.class);
-                        long timestamp = childSnapshot.child(C_COLUMN_TIMESTAMP).getValue(long.class);
-                        String messageType = childSnapshot.child(C_COLUMN_MESSAGE_TYPE).getValue(String.class);
+                        String lastMessage = readStringValue(childSnapshot, C_COLUMN_LAST_MESSAGE, "");
+                        String personName = readStringValue(childSnapshot, C_COLUMN_NAME, "");
+                        long timestamp = readLongValue(childSnapshot, C_COLUMN_TIMESTAMP, 0L);
+                        String messageType = readStringValue(childSnapshot, C_COLUMN_MESSAGE_TYPE, MessageType.SENT.toString());
+                        if (conversationId == null) {
+                            continue;
+                        }
+                        conversationId = normalizeConversationId(conversationId);
+                        if (lastMessage == null) {
+                            lastMessage = "";
+                        }
+                        if (personName == null || personName.trim().isEmpty()) {
+                            personName = conversationId;
+                        }
+                        if (messageType == null || messageType.trim().isEmpty()) {
+                            messageType = MessageType.SENT.toString();
+                        }
 
                         //store in array list
 //                        int id = Integer.parseInt(conversationId.substring(2, conversationId.length()));
@@ -128,25 +223,21 @@ public class ChatFirebaseDAO implements IChatInterface {
                     messageArrayList = new ArrayList<>();
 
                     for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
-                        String messageId = childSnapshot.getKey();
-                        String messsageUsername = childSnapshot.child(M_COLUMN_USERNAME).getValue(String.class);
-                        String messageDetail = childSnapshot.child(M_COLUMN_DETAIL).getValue(String.class);
-                        Long messageTimeRaw = childSnapshot.child(M_COLUMN_TIME).getValue(Long.class);
-                        Long messageIsSenderRaw = childSnapshot.child(M_COLUMN_IS_SENDER).getValue(Long.class);
-                        String messagePersonId = childSnapshot.child(M_COLUMN_C_ID).getValue(String.class);
-                        String contentType = childSnapshot.child(M_COLUMN_CONTENT_TYPE).getValue(String.class);
-                        String mediaPayload = childSnapshot.child(M_COLUMN_MEDIA_PAYLOAD).getValue(String.class);
-                        Long mediaDurationRaw = childSnapshot.child(M_COLUMN_MEDIA_DURATION).getValue(Long.class);
-
-                        long messageTime = messageTimeRaw == null ? System.currentTimeMillis() : messageTimeRaw;
-                        int messageIsSender = messageIsSenderRaw == null ? 0 : messageIsSenderRaw.intValue();
-                        int mediaDuration = mediaDurationRaw == null ? 0 : mediaDurationRaw.intValue();
+                        String messsageUsername = readStringValue(childSnapshot, M_COLUMN_USERNAME, "");
+                        String messageDetail = readStringValue(childSnapshot, M_COLUMN_DETAIL, "");
+                        long messageTime = readLongValue(childSnapshot, M_COLUMN_TIME, System.currentTimeMillis());
+                        int messageIsSender = readIntValue(childSnapshot, M_COLUMN_IS_SENDER, 0);
+                        String messagePersonId = readStringValue(childSnapshot, M_COLUMN_C_ID, "");
+                        String contentType = readStringValue(childSnapshot, M_COLUMN_CONTENT_TYPE, Message.CONTENT_TEXT);
+                        String mediaPayload = readStringValue(childSnapshot, M_COLUMN_MEDIA_PAYLOAD, "");
+                        int mediaDuration = readIntValue(childSnapshot, M_COLUMN_MEDIA_DURATION, 0);
                         if (messageDetail == null) {
                             messageDetail = "";
                         }
                         if (messagePersonId == null) {
                             messagePersonId = "";
                         }
+                        messagePersonId = normalizeConversationId(messagePersonId);
 
                         //store in array list
 //                        int id = Integer.parseInt(conversationId.substring(2, conversationId.length()));
@@ -183,9 +274,12 @@ public class ChatFirebaseDAO implements IChatInterface {
 
     @Override
     public void savePerson(Person person) {
+        String personId = normalizeConversationId(person.getId());
+        if (personId.isEmpty()) {
+            Log.e("firebasedb", "Cannot save person: empty id");
+            return;
+        }
         myRef = database.getReference().child(CHAT_DB).child(userPhoneNumber).child(CONVERSATION_TABLE);
-        //making string id
-        String personId = person.getId();
         //making hashmap
         Map<String, Object> childObject = new HashMap<>();
         childObject.put(C_COLUMN_NAME, person.getName());
@@ -207,7 +301,8 @@ public class ChatFirebaseDAO implements IChatInterface {
 
     @Override
     public void deleteOnePerson(String id) {
-        myRef = database.getReference().child(CHAT_DB).child(userPhoneNumber).child(CONVERSATION_TABLE).child(id);
+        String normalizedId = normalizeConversationId(id);
+        myRef = database.getReference().child(CHAT_DB).child(userPhoneNumber).child(CONVERSATION_TABLE).child(normalizedId);
         myRef.removeValue();
     }
 
@@ -221,9 +316,12 @@ public class ChatFirebaseDAO implements IChatInterface {
 
     @Override
     public void updatePersonConversation(Person person) {
+        String personId = normalizeConversationId(person.getId());
+        if (personId.isEmpty()) {
+            Log.e("firebasedb", "Cannot update person: empty id");
+            return;
+        }
         myRef = database.getReference().child(CHAT_DB).child(userPhoneNumber).child(CONVERSATION_TABLE);
-        //making string id
-        String personId = person.getId();
         //making hashmap
         Map<String, Object> childObject = new HashMap<>();
         childObject.put(C_COLUMN_NAME, person.getName());
@@ -236,6 +334,19 @@ public class ChatFirebaseDAO implements IChatInterface {
 
     @Override
     public void saveMessage(Message message, String conversationID) {
+        String targetConversationId = normalizeConversationId(conversationID);
+        if (targetConversationId.isEmpty()) {
+            Log.e("firebasedb", "Cannot save message: empty conversationID");
+            return;
+        }
+        if (userPhoneNumber == null || userPhoneNumber.trim().isEmpty()) {
+            Log.e("firebasedb", "Cannot save message: missing sender user id");
+            return;
+        }
+        if (userName == null || userName.trim().isEmpty()) {
+            userName = userPhoneNumber;
+        }
+
         //add messsage at sender side
         myRef = database.getReference().child(CHAT_DB).child(userPhoneNumber).child(MESSAGE_TABLE);
         String messageId = UUID.randomUUID().toString();
@@ -244,14 +355,14 @@ public class ChatFirebaseDAO implements IChatInterface {
         childObject.put(M_COLUMN_DETAIL, message.getMessage());
         childObject.put(M_COLUMN_TIME, message.getTime());
         childObject.put(M_COLUMN_IS_SENDER, 0);
-        childObject.put(M_COLUMN_C_ID, conversationID);
+        childObject.put(M_COLUMN_C_ID, targetConversationId);
         childObject.put(M_COLUMN_CONTENT_TYPE, message.getContentType());
         childObject.put(M_COLUMN_MEDIA_PAYLOAD, message.getMediaPayload());
         childObject.put(M_COLUMN_MEDIA_DURATION, message.getMediaDurationMs());
         myRef.child(messageId).setValue(childObject);
 
         //add messsage at receiver side
-        myRef = database.getReference().child(CHAT_DB).child(conversationID).child(MESSAGE_TABLE);
+        myRef = database.getReference().child(CHAT_DB).child(targetConversationId).child(MESSAGE_TABLE);
         String messageId2 = UUID.randomUUID().toString();
         Map<String, Object> childObject2 = new HashMap<>();
         childObject2.put(M_COLUMN_USERNAME, userName);
@@ -273,11 +384,11 @@ public class ChatFirebaseDAO implements IChatInterface {
         childObject3.put(C_COLUMN_TIMESTAMP, System.currentTimeMillis());
         childObject3.put(C_COLUMN_MESSAGE_TYPE, MessageType.SENT.toString());
 
-        myRef.child(conversationID).updateChildren(childObject3);
+        myRef.child(targetConversationId).updateChildren(childObject3);
 
 
         //update receiver conversation row
-        myRef = database.getReference().child(CHAT_DB).child(conversationID).child(CONVERSATION_TABLE);
+        myRef = database.getReference().child(CHAT_DB).child(targetConversationId).child(CONVERSATION_TABLE);
         //making hashmap
         Map<String, Object> childObject4 = new HashMap<>();
         childObject4.put(C_COLUMN_NAME, userName);
@@ -291,13 +402,17 @@ public class ChatFirebaseDAO implements IChatInterface {
 
     @Override
     public ArrayList<Message> loadMessageList(String CID) {
+        String normalizedCid = normalizeConversationId(CID);
         ArrayList<Message> filteredMessageList;
         filteredMessageList = new ArrayList<>();
         if(messageArrayList == null){
             messageArrayList = new ArrayList<>();
         }else{
             for (Message m :messageArrayList) {
-                if(Objects.equals(m.getConversation_ID(), CID)){
+                String normalizedMessageCid = normalizeConversationId(m.getConversation_ID());
+                if(Objects.equals(m.getConversation_ID(), CID)
+                        || Objects.equals(m.getConversation_ID(), normalizedCid)
+                        || Objects.equals(normalizedMessageCid, normalizedCid)){
                     filteredMessageList.add(m);
                 }
             }

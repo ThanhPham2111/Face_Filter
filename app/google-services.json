@@ -1,44 +1,27 @@
 {
   "project_info": {
-    "project_number": "841469402559",
-    "project_id": "chatapp-66f57",
-    "storage_bucket": "chatapp-66f57.firebasestorage.app"
+    "project_number": "290815874000",
+    "firebase_url": "https://chatapp-test-f10f5-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "chatapp-test-f10f5",
+    "storage_bucket": "chatapp-test-f10f5.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:841469402559:android:acead596ff03c511c6150a",
+        "mobilesdk_app_id": "1:290815874000:android:de6b5acc72bad13a301fd5",
         "android_client_info": {
           "package_name": "com.example.chatapp"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "841469402559-k20rjrd3vhdrm4tafu801ahfnlsomq72.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.myapplication",
-            "certificate_hash": "a7a74cac415cb39af9147050cf11784f60d87e00"
-          }
-        },
-        {
-          "client_id": "841469402559-ogql7lvphb8gl9ta95hnresh3rv3l46d.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCe-Pp9q2_UimEV2IrW1jtjmJ85_YPm-yg"
+          "current_key": "AIzaSyAwyWGoZYwq6Bb15fRKHP0ADGHCHkshtFo"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "841469402559-ogql7lvphb8gl9ta95hnresh3rv3l46d.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

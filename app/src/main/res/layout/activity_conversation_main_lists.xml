@@ -12,8 +12,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:gravity="center"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="8dp"
         android:paddingTop="16dp"
         android:paddingBottom="8dp">
 
@@ -32,6 +34,21 @@
             android:textStyle="bold"
             android:fontFamily="sans-serif-medium"
             android:textSize="22sp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <ImageButton
+            android:id="@+id/logoutBtn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_action_icon_button"
+            android:contentDescription="@string/logout"
+            android:padding="8dp"
+            android:src="@android:drawable/ic_lock_power_off"
+            app:tint="@color/pastel_blue_700" />
     </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton

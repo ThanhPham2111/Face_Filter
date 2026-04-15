@@ -60,4 +60,25 @@ public class Globals {
 
         return "-1";
     }
+
+    public static String extractUserIdFromEmail(String email) {
+        if (email == null) {
+            return "";
+        }
+
+        String normalized = email.trim().toLowerCase();
+        String userPart;
+        if (normalized.endsWith(Email_Extension)) {
+            userPart = normalized.substring(0, normalized.length() - Email_Extension.length());
+        } else {
+            int atIndex = normalized.indexOf('@');
+            userPart = atIndex > 0 ? normalized.substring(0, atIndex) : normalized;
+        }
+
+        String formatted = formatPhoneNumber(userPart);
+        if (!"-1".equals(formatted)) {
+            return formatted;
+        }
+        return userPart;
+    }
 }

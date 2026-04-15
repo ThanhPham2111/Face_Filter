@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@drawable/bg_auth_screen"
     android:orientation="vertical">
 
@@ -46,7 +47,7 @@
             android:contentDescription="@string/cancel_upload"
             android:onClick="handleOnClick"
             android:src="@android:drawable/ic_menu_close_clear_cancel"
-            android:tint="@color/pastel_blue_700" />
+            app:tint="@color/pastel_blue_700" />
     </LinearLayout>
 
     <LinearLayout
@@ -69,7 +70,7 @@
             android:contentDescription="@string/attach_image"
             android:onClick="handleOnClick"
             android:src="@android:drawable/ic_menu_gallery"
-            android:tint="@color/pastel_blue_700" />
+            app:tint="@color/pastel_blue_700" />
 
         <EditText
             android:id="@+id/sender1Text"
@@ -93,7 +94,7 @@
             android:contentDescription="@string/record_voice"
             android:onClick="handleOnClick"
             android:src="@android:drawable/ic_btn_speak_now"
-            android:tint="@color/pastel_blue_700" />
+            app:tint="@color/pastel_blue_700" />
 
         <ImageButton
             android:id="@+id/sender1TextBtn"
@@ -103,7 +104,7 @@
             android:contentDescription="@string/send_message"
             android:onClick="handleOnClick"
             android:src="@drawable/ic_send_pastel"
-            android:tint="@android:color/white" />
+            app:tint="@android:color/white" />
     </LinearLayout>
 
 </LinearLayout>
