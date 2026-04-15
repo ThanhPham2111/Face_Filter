@@ -97,6 +97,9 @@ public class ChatDbDAO implements IChatInterface {
         content.put(M_COLUMN_TIME, message.getTime());
         content.put(M_COLUMN_IS_SENDER, message.getType());
         content.put(M_COLUMN_C_ID, conversationID);
+        content.put(M_COLUMN_CONTENT_TYPE, message.getContentType());
+        content.put(M_COLUMN_MEDIA_PAYLOAD, message.getMediaPayload());
+        content.put(M_COLUMN_MEDIA_DURATION, message.getMediaDurationMs());
         long result =  db.insert(MESSAGE_TABLE, null, content);
         if(result == -1){
             Toast.makeText(context, "Failed", LENGTH_SHORT).show();
@@ -110,7 +113,10 @@ public class ChatDbDAO implements IChatInterface {
         String Query = "SELECT c." + C_COLUMN_NAME +
                 ", m." + M_COLUMN_DETAIL +
                 ", m." + M_COLUMN_TIME +
-                ", m." + M_COLUMN_IS_SENDER + " FROM " +
+                ", m." + M_COLUMN_IS_SENDER +
+                ", m." + M_COLUMN_CONTENT_TYPE +
+                ", m." + M_COLUMN_MEDIA_PAYLOAD +
+                ", m." + M_COLUMN_MEDIA_DURATION + " FROM " +
                 CONVERSATION_TABLE + " as c JOIN " + MESSAGE_TABLE + " as m on c.id = m." +
                 M_COLUMN_C_ID + " WHERE " + M_COLUMN_C_ID + " = '" + CID + "'";
         SQLiteDatabase db = myDataBaseHelper.getReadableDatabase();
@@ -122,7 +128,10 @@ public class ChatDbDAO implements IChatInterface {
                 while (cursor.moveToNext()){
                     int senderType = Integer.parseInt(cursor.getString(3));
                     String username = senderType == 0 ? MESSAGE_SENDER : cursor.getString(0);
-                    Message message = new Message(username,cursor.getString(1),cursor.getLong(2),senderType);
+                    String contentType = cursor.getString(4);
+                    String mediaPayload = cursor.getString(5);
+                    int mediaDuration = cursor.getInt(6);
+                    Message message = new Message(username, cursor.getString(1), cursor.getLong(2), senderType, contentType, mediaPayload, mediaDuration);
                     messageArrayList.add(message);
                 }
             }

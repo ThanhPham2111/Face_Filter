@@ -13,4 +13,12 @@
     <string name="enter_password">Nhập mật khẩu</string>
     <string name="conversations">Cuộc trò chuyện</string>
     <string name="messages">Tin nhắn</string>
+    <string name="attach_image">Đính kèm ảnh</string>
+    <string name="record_voice">Ghi âm</string>
+    <string name="send_message">Gửi tin nhắn</string>
+    <string name="uploading_media">Đang tải media...</string>
+    <string name="image_too_large">Ảnh quá lớn, vui lòng chọn ảnh nhỏ hơn</string>
+    <string name="voice_too_long">Voice quá dài, vui lòng dưới 60 giây</string>
+    <string name="cancel_upload">Hủy upload</string>
+    <string name="upload_cancelled">Đã hủy upload</string>
 </resources>

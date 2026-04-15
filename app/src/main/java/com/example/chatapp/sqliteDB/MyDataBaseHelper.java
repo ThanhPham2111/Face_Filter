@@ -16,7 +16,7 @@ import androidx.annotation.Nullable;
 public class MyDataBaseHelper extends SQLiteOpenHelper {
 
     private Context context;
-    public static final int DATABASE_VERSION = 4;
+    public static final int DATABASE_VERSION = 5;
     public static final String DATABASE_NAME = "Chats.db";
 
 
@@ -38,7 +38,10 @@ public class MyDataBaseHelper extends SQLiteOpenHelper {
                 M_COLUMN_DETAIL + " TEXT, " +
                 M_COLUMN_TIME + " TEXT, " +
                 M_COLUMN_IS_SENDER + " INTEGER, " +
-                M_COLUMN_C_ID + " TEXT, FOREIGN KEY (" + M_COLUMN_C_ID + ") REFERENCES " +
+                M_COLUMN_C_ID + " TEXT, " +
+                M_COLUMN_CONTENT_TYPE + " TEXT, " +
+                M_COLUMN_MEDIA_PAYLOAD + " TEXT, " +
+                M_COLUMN_MEDIA_DURATION + " INTEGER, FOREIGN KEY (" + M_COLUMN_C_ID + ") REFERENCES " +
                 CONVERSATION_TABLE + " (id) on DELETE CASCADE on UPDATE CASCADE)";
         db.execSQL(sqlQuery2);
     }
